@@ -1,0 +1,204 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string"
+        },
+        "networkInterfaceName": {
+            "type": "string"
+        },
+        "enableAcceleratedNetworking": {
+            "type": "bool"
+        },
+        "networkSecurityGroupName": {
+            "type": "string"
+        },
+        "networkSecurityGroupRules": {
+            "type": "array"
+        },
+        "subnetName": {
+            "type": "string"
+        },
+        "virtualNetworkId": {
+            "type": "string"
+        },
+        "virtualMachineName": {
+            "type": "string"
+        },
+        "virtualMachineRG": {
+            "type": "string"
+        },
+        "osDiskType": {
+            "type": "string"
+        },
+        "virtualMachineSize": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "secureString"
+        },
+        "diagnosticsStorageAccountName": {
+            "type": "string"
+        },
+        "diagnosticsStorageAccountId": {
+            "type": "string"
+        },
+        "diagnosticsStorageAccountType": {
+            "type": "string"
+        },
+        "diagnosticsStorageAccountKind": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+        "vnetId": "[parameters('virtualNetworkId')]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
+    },
+    "resources": [
+        {
+            "name": "[parameters('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-07-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": "[parameters('enableAcceleratedNetworking')]",
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            },
+            "tags": {
+                "domainJoin": "Yes"
+            }
+        },
+        {
+            "name": "[parameters('networkSecurityGroupName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-02-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": "[parameters('networkSecurityGroupRules')]"
+            },
+            "tags": {
+                "domainJoin": "Yes"
+            }
+        },
+        {
+            "name": "[parameters('virtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('diagnosticsStorageAccountName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('osDiskType')]"
+                        }
+                    },
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2016-Datacenter",
+                        "version": "latest"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachineName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "windowsConfiguration": {
+                        "enableAutomaticUpdates": true,
+                        "provisionVmAgent": true
+                    }
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[concat('https://', parameters('diagnosticsStorageAccountName'), '.blob.core.windows.net/')]"
+                    }
+                }
+            },
+            "tags": {
+                "domainJoin": "Yes"
+            }
+        },
+        {
+            "name": "[parameters('diagnosticsStorageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "location": "[parameters('location')]",
+            "properties": {},
+            "kind": "[parameters('diagnosticsStorageAccountKind')]",
+            "sku": {
+                "name": "[parameters('diagnosticsStorageAccountType')]"
+            },
+            "tags": {
+                "domainJoin": "Yes"
+            }
+        },
+        {
+            "name": "Microsoft.CustomScriptExtension-20191113105534",
+            "apiVersion": "2015-01-01",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "https://gallery.azure.com/artifact/20161101/Microsoft.CustomScriptExtension-arm.2.0.56/Artifacts/MainTemplate.json"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "azvmautomate"
+                    },
+                    "location": {
+                        "value": "northeurope"
+                    },
+                    "fileUris": {
+                        "value": "https://iaasv2tempstoreneurope.blob.core.windows.net/vmextensionstemporary-1003200057fcd77c-20191113052523903/testscript.ps1?sv=2017-04-17&sr=c&sig=teE45g2O%2BZWlxxwh2AdrL4Dap5S2ifjlSXoSzFzqHhk%3D&se=2019-11-14T05%3A25%3A23Z&sp=rw"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+            ]
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('adminUsername')]"
+        }
+    }
+}

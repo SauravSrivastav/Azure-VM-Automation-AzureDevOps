@@ -1,0 +1,97 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "northeurope"
+        },
+        "networkInterfaceName": {
+            "value": "azvmautomate537"
+        },
+        "enableAcceleratedNetworking": {
+            "value": true
+        },
+        "networkSecurityGroupName": {
+            "value": "azvmautomate-nsg"
+        },
+        "networkSecurityGroupRules": {
+            "value": [
+                {
+                    "name": "RDP",
+                    "properties": {
+                        "priority": 300,
+                        "protocol": "TCP",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourceAddressPrefix": "*",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*",
+                        "destinationPortRange": "3389"
+                    }
+                },
+                {
+                    "name": "HTTP",
+                    "properties": {
+                        "priority": 320,
+                        "protocol": "TCP",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourceAddressPrefix": "*",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*",
+                        "destinationPortRange": "80"
+                    }
+                },
+                {
+                    "name": "HTTPS",
+                    "properties": {
+                        "priority": 340,
+                        "protocol": "TCP",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourceAddressPrefix": "*",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*",
+                        "destinationPortRange": "443"
+                    }
+                }
+            ]
+        },
+        "subnetName": {
+            "value": "ocnpw-ne-sandbox1-subnet"
+        },
+        "virtualNetworkId": {
+            "value": "/subscriptions/8e043298-911d-482d-b39a-d83aabe9e445/resourceGroups/OCNPW-NE-Sandbox1-VNet/providers/Microsoft.Network/virtualNetworks/ocnpw-ne-sandbox1-vnet"
+        },
+        "virtualMachineName": {
+            "value": "azvmautomate"
+        },
+        "virtualMachineRG": {
+            "value": "FME-Automation"
+        },
+        "osDiskType": {
+            "value": "Standard_LRS"
+        },
+        "virtualMachineSize": {
+            "value": "Standard_DS13_v2"
+        },
+        "adminUsername": {
+            "value": "testuser1"
+        },
+        "adminPassword": {
+            "value": "Passw0rdPassw0rd"
+        },
+        "diagnosticsStorageAccountName": {
+            "value": "fmeautomationdiag"
+        },
+        "diagnosticsStorageAccountId": {
+            "value": "Microsoft.Storage/storageAccounts/fmeautomationdiag"
+        },
+        "diagnosticsStorageAccountType": {
+            "value": "Standard_LRS"
+        },
+        "diagnosticsStorageAccountKind": {
+            "value": "Storage"
+        }
+    }
+}
